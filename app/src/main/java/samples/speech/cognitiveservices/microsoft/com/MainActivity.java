@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize speech synthesizer and its dependencies
         speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
-        speechConfig.setSpeechSynthesisLanguage("en-EU");
+        speechConfig.setSpeechSynthesisLanguage("ru-RU");
         assert (speechConfig != null);
         synthesizer = new SpeechSynthesizer(speechConfig);
         Button b = findViewById(R.id.button3);
@@ -75,7 +75,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 case MotionEvent.ACTION_UP: {
+                    recognizer.stopContinuousRecognitionAsync();
                     recognizer.close();
+
                     try {
                         String language = "RU";
                         String translation = "хуй";
