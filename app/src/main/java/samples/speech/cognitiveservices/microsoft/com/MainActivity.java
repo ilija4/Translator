@@ -7,68 +7,72 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.microsoft.cognitiveservices.speech.*;
-import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
-import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.service.autofill.OnClickAction;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.microsoft.cognitiveservices.speech.ResultReason;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
-import com.microsoft.cognitiveservices.speech.SpeechRecognitionResult;
-import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
-import com.microsoft.cognitiveservices.speech.*;
-import com.microsoft.cognitiveservices.speech.audio.*;
 import com.microsoft.cognitiveservices.speech.translation.*;
-
-import java.util.concurrent.Future;
-
-import static android.Manifest.permission.*;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    String[] langs_codes = { "en-US", "ru-RU", "uk-UA", "fr-FR", "it-IT", "ja-JP", "pl-PL", "de-DE", "ko-KR", "zh-CHS"};
+    String[] langs_names = { "English", "Русский", "Український", "Français", "Italiano", "日本語", "Polski", "Deutsch", "한국어", "中文"};
+
     private static String SpeechSubscriptionKey = "881e98ee3ca74e72ab85a5add74b5f19";
     private static String SpeechRegion = "eastus";
 
-    private SpeechConfig speechConfig;
+    private static String language1 = "en-US";
+    private static String language2 = "ru-RU";
+
     private SpeechSynthesizer synthesizer;
+    private SpeechConfig speechConfig;
+    private SpeechTranslationConfig translationConfig;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Spinner spinnerRight = (Spinner) findViewById(R.id.spinnerRight);
+        ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, langs_names);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRight.setAdapter(adapter);
+        spinnerRight.setSelection(1);
+
+        Spinner spinnerLeft = (Spinner) findViewById(R.id.spinnerLeft);
+        ArrayAdapter<String> adapter2 = new ArrayAdapter(this, android.R.layout.simple_spinner_item, langs_names);
+        adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerLeft.setAdapter(adapter2);
+        spinnerLeft.setSelection(0);
+
         int requestCode = 5;
         ActivityCompat.requestPermissions(samples.speech.cognitiveservices.microsoft.com.MainActivity.this, new String[]{RECORD_AUDIO, INTERNET}, requestCode);
 
+        translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+        translationConfig.setSpeechRecognitionLanguage(language1);
+        translationConfig.addTargetLanguage(language2);
+
         speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
-        speechConfig.setSpeechRecognitionLanguage("ru-RU");
+        speechConfig.setSpeechSynthesisLanguage(language2);
         assert (speechConfig != null);
-
-        synthesizer = new SpeechSynthesizer(speechConfig);
-        assert (synthesizer != null);
-
-        SpeechTranslationConfig translationConfig = SpeechTranslationConfig.fromSubscription(
-                SpeechSubscriptionKey, SpeechRegion);
-        translationConfig.setSpeechRecognitionLanguage("ru-RU");
-        translationConfig.addTargetLanguage("en");
 
         TextView txt = (TextView) this.findViewById(R.id.text); // 'hello' is the ID of your text view
 
-        findViewById(R.id.button4).setOnTouchListener(new View.OnTouchListener() {
+        findViewById(R.id.hold).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
@@ -87,8 +91,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // SpeechRecognitionResult result;
-            //SpeechRecognizer reco;
             TranslationRecognitionResult result;
             TranslationRecognizer recognizer;
             String language;
@@ -96,8 +98,9 @@ public class MainActivity extends AppCompatActivity {
 
             private void Start() {
                 try {
+                    synthesizer = new SpeechSynthesizer(speechConfig);
+
                     recognizer = new TranslationRecognizer(translationConfig);
-                    assert (recognizer != null);
 
                     Future<TranslationRecognitionResult> task = recognizer.recognizeOnceAsync();
                     assert (task != null);
@@ -112,176 +115,87 @@ public class MainActivity extends AppCompatActivity {
 
             private void Close() {
                 try {
-                    language = "хуй";
-                    translation = "хуй";
-                    recognizer.stopContinuousRecognitionAsync();
-                    if(result != null)
-                    for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
-                        language = pair.getKey();
-                        translation = pair.getValue();
-                    }
+                    language = "hui";
+                    translation = "hui";
+                    recognizer.close();
+                    if (result != null)
+                        for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
+                            language = pair.getKey();
+                            translation = pair.getValue();
+                        }
                     txt.setText(translation);
+
+                    // Note: this will block the UI thread, so eventually, you want to register for the event
+                    SpeechSynthesisResult voip = synthesizer.SpeakText(translation);
+                    assert (voip != null);
+                    voip.close();
                 } catch (Exception ex) {
-                    Log.e("SpeechSDKDemo", "myauuufds unexpected " + ex.getMessage());
+                    Log.e("SpeechSDKDemo", "unexpected " + ex.getMessage());
                     assert (false);
                 }
-//                if (result.getReason() == ResultReason.RecognizedSpeech) {
-//                    txt.setText(result.getText());
-//                } else {
-//                    txt.setText("Error recognizing. Did you update the subscription info?" + System.lineSeparator() + result.toString());
-//                }
-//                reco.close();
+            }
+        });
+        findViewById(R.id.swap).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Button left = findViewById(R.id.buttonLanguage1);
+                Button right = findViewById(R.id.buttonLanguage2);
+
+
+                String t = left.getText().toString();
+                left.setText(right.getText().toString());
+                right.setText(t);
+
+                t = language1;
+                language1 = language2;
+                language2 = t;
+
+                translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+                translationConfig.setSpeechRecognitionLanguage(language1);
+                translationConfig.addTargetLanguage(language2);
+
+                speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+                speechConfig.setSpeechSynthesisLanguage(language2);
+            }
+        });
+        spinnerLeft.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String item = (String)parent.getItemAtPosition(position);
+                int lang_id = Arrays.asList(item).indexOf(item);
+                String lang_code = langs_codes[lang_id];
+
+                translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+                language1 = lang_code;
+                translationConfig.setSpeechRecognitionLanguage(language1);
+                translationConfig.addTargetLanguage(language2);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
 
             }
         });
+        spinnerRight.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String item = (String)parent.getItemAtPosition(position);
+                int lang_id = Arrays.asList(item).indexOf(item);
+                String lang_code = langs_codes[lang_id];
 
-    }
+                translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+                language2 = lang_code;
+                translationConfig.setSpeechRecognitionLanguage(language1);
+                translationConfig.addTargetLanguage(language2);
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        TextView txt = (TextView) this.findViewById(R.id.text); // 'hello' is the ID of your text view
-
-        try {
-
-            SpeechRecognizer reco = new SpeechRecognizer(speechConfig);
-            assert (reco != null);
-
-            Future<SpeechRecognitionResult> task = reco.recognizeOnceAsync();
-            assert (task != null);
-
-            // Note: this will block the UI thread, so eventually, you want to
-            //        register for the event (see full samples)
-            SpeechRecognitionResult result = task.get();
-            assert (result != null);
-
-            if (result.getReason() == ResultReason.RecognizedSpeech) {
-                txt.setText(result.getText());
-            } else {
-                txt.setText("Error recognizing. Did you update the subscription info?" + System.lineSeparator() + result.toString());
+                speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
+                speechConfig.setSpeechSynthesisLanguage(language2);
             }
 
-            reco.close();
-        } catch (Exception ex) {
-            Log.e("SpeechSDKDemo", "unexpected " + ex.getMessage());
-            assert (false);
-        }
-        return super.onTouchEvent(event);
-    }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // Release speech synthesizer and its dependencies
-        synthesizer.close();
-        speechConfig.close();
-    }
-
-    //    @SuppressLint("SetTextI18n")
-//    public void onTranslateButtonClicked(View v) throws ExecutionException, InterruptedException {
-//        TextView speakText = this.findViewById(R.id.text);
-//
-//
-////        //TranslationRecognizer recognizer = new TranslationRecognizer(translationConfig);
-////        TranslationRecognitionResult result = recognizer.recognizeOnceAsync().get();
-////        speakText.setText(result.getTranslations().toString());
-//    }
-//    @SuppressLint("SetTextI18n")
-//    public void onTranslateButtonClicked(View v) throws ExecutionException, InterruptedException {
-////        TextView debugMassage = this.findViewById(R.id.debugMassage);
-////        TextView translationText = this.findViewById(R.id.Texttest);
-////        SpeechTranslationConfig translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
-////        translationConfig.setSpeechRecognitionLanguage("ru-RU");
-////        translationConfig.addTargetLanguage("en");
-////        TranslationRecognizer recognizer = new TranslationRecognizer(translationConfig);
-////        TranslationRecognitionResult result = recognizer.recognizeOnceAsync().get();
-////        String language = null;
-////        String translation = null;
-////        for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
-////            language = pair.getKey();
-////            translation = pair.getValue();
-////        }
-////        translationText.setText(translation);
-////        try {
-////            // Note: this will block the UI thread, so eventually, you want to register for the event
-////            SpeechSynthesisResult voip = synthesizer.SpeakText(translation);
-////            assert (voip != null);
-////            if (voip.getReason() == ResultReason.SynthesizingAudioCompleted) {
-////                debugMassage.setText("Speech synthesis succeeded.");
-////            } else if (voip.getReason() == ResultReason.Canceled) {
-////                String cancellationDetails =
-////                        SpeechSynthesisCancellationDetails.fromResult(voip).toString();
-////                debugMassage.setText("Error synthesizing. Error detail: " +
-////                        System.lineSeparator() + cancellationDetails +
-////                        System.lineSeparator() + "Did you update the subscription info?");
-////            }
-////
-////            voip.close();
-////        } catch (Exception ex) {
-////            Log.e("SpeechSDKDemo", "unexpected " + ex.getMessage());
-////            assert (false);
-////        }
-//
-//    }
-    @SuppressLint("SetTextI18n")
-    public void onSpeechButtonClicked(View v) {
-        TextView txt = (TextView) this.findViewById(R.id.text); // 'hello' is the ID of your text view
-
-        try {
-            SpeechConfig config = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
-            config.setSpeechRecognitionLanguage("ru-RU");
-            assert (config != null);
-
-            SpeechRecognizer reco = new SpeechRecognizer(config);
-            assert (reco != null);
-
-            Future<SpeechRecognitionResult> task = reco.recognizeOnceAsync();
-            assert (task != null);
-
-            // Note: this will block the UI thread, so eventually, you want to
-            //        register for the event (see full samples)
-            SpeechRecognitionResult result = task.get();
-            assert (result != null);
-
-            if (result.getReason() == ResultReason.RecognizedSpeech) {
-                txt.setText(result.getText());
-            } else {
-                txt.setText("Error recognizing. Did you update the subscription info?" + System.lineSeparator() + result.toString());
             }
-
-            reco.close();
-        } catch (Exception ex) {
-            Log.e("SpeechSDKDemo", "unexpected " + ex.getMessage());
-            assert (false);
-        }
-    }
-
-
-    @SuppressLint("SetTextI18n")
-    public void onTalkButtonClicked(View v) {
-
-        TextView outputMessage = this.findViewById(R.id.text3);
-        TextView speakText = this.findViewById(R.id.text);
-
-        try {
-            // Note: this will block the UI thread, so eventually, you want to register for the event
-            SpeechSynthesisResult result = synthesizer.SpeakText(speakText.getText().toString());
-            assert (result != null);
-
-            if (result.getReason() == ResultReason.SynthesizingAudioCompleted) {
-                outputMessage.setText("Speech synthesis succeeded.");
-            } else if (result.getReason() == ResultReason.Canceled) {
-                String cancellationDetails =
-                        SpeechSynthesisCancellationDetails.fromResult(result).toString();
-                outputMessage.setText("Error synthesizing. Error detail: " +
-                        System.lineSeparator() + cancellationDetails +
-                        System.lineSeparator() + "Did you update the subscription info?");
-            }
-
-            result.close();
-        } catch (Exception ex) {
-            Log.e("SpeechSDKDemo", "unexpected " + ex.getMessage());
-            assert (false);
-        }
+        });
     }
 }
