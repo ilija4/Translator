@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
                     language = "хуй";
                     translation = "хуй";
                     recognizer.stopContinuousRecognitionAsync();
-                    recognizer.close();
                     if(result != null)
                     for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
                         language = pair.getKey();
