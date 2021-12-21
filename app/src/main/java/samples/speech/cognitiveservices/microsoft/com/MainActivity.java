@@ -29,11 +29,11 @@ import com.microsoft.cognitiveservices.speech.translation.*;
 
 public class MainActivity extends AppCompatActivity {
 
-    String[] langs_codes = { "en-US", "ru-RU", "uk-UA", "fr-FR", "it-IT", "ja-JP", "pl-PL", "de-DE", "ko-KR", "zh-CHS"};
-    String[] langs_names = { "English", "Русский", "Український", "Français", "Italiano", "日本語", "Polski", "Deutsch", "한국어", "中文"};
+    String[] langs_codes = {"en-US", "ru-RU", "uk-UA", "fr-FR", "it-IT", "ja-JP", "pl-PL", "de-DE", "ko-KR"};
+    String[] langs_names = {"English", "Русский", "Український", "Français", "Italiano", "日本語", "Polski", "Deutsch", "한국어"};
 
-    private static String SpeechSubscriptionKey = "881e98ee3ca74e72ab85a5add74b5f19";
-    private static String SpeechRegion = "eastus";
+    private static final String SpeechSubscriptionKey = "881e98ee3ca74e72ab85a5add74b5f19";
+    private static final String SpeechRegion = "eastus";
 
     private static String language1 = "en-US";
     private static String language2 = "ru-RU";
@@ -46,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        language1 = langs_codes[0];
+        language2 = langs_codes[1];
 
         Spinner spinnerRight = (Spinner) findViewById(R.id.spinnerRight);
         ArrayAdapter<String> adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, langs_names);
@@ -70,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
         speechConfig.setSpeechSynthesisLanguage(language2);
         assert (speechConfig != null);
 
-        TextView txt = (TextView) this.findViewById(R.id.text); // 'hello' is the ID of your text view
+        TextView txtOrig = (TextView) findViewById(R.id.textOriginal);
+        TextView txtTranslate = (TextView) findViewById(R.id.textTranslate);
 
         findViewById(R.id.hold).setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -115,17 +119,16 @@ public class MainActivity extends AppCompatActivity {
 
             private void Close() {
                 try {
-                    language = "hui";
-                    translation = "hui";
+                    language = "none";
+                    translation = "none";
                     recognizer.close();
                     if (result != null)
                         for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
                             language = pair.getKey();
                             translation = pair.getValue();
                         }
-                    txt.setText(translation);
-
-                    // Note: this will block the UI thread, so eventually, you want to register for the event
+                    txtTranslate.setText(translation);
+                    txtOrig.setText(result.getText());
                     SpeechSynthesisResult voip = synthesizer.SpeakText(translation);
                     assert (voip != null);
                     voip.close();
@@ -135,20 +138,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        findViewById(R.id.swap).setOnClickListener(new View.OnClickListener(){
+        findViewById(R.id.swap).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Button left = findViewById(R.id.buttonLanguage1);
-                Button right = findViewById(R.id.buttonLanguage2);
+                Spinner spinnerLeft = findViewById(R.id.spinnerLeft);
+                Spinner spinnerRight = findViewById(R.id.spinnerRight);
 
+                int t = spinnerLeft.getSelectedItemPosition();
+                spinnerLeft.setSelection(spinnerRight.getSelectedItemPosition());
+                spinnerRight.setSelection(t);
 
-                String t = left.getText().toString();
-                left.setText(right.getText().toString());
-                right.setText(t);
-
-                t = language1;
+                String s = language1;
                 language1 = language2;
-                language2 = t;
+                language2 = s;
 
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
                 translationConfig.setSpeechRecognitionLanguage(language1);
@@ -161,8 +163,8 @@ public class MainActivity extends AppCompatActivity {
         spinnerLeft.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String item = (String)parent.getItemAtPosition(position);
-                int lang_id = Arrays.asList(item).indexOf(item);
+                String item = (String) parent.getItemAtPosition(position);
+                int lang_id = Arrays.asList(langs_names).indexOf(item);
                 String lang_code = langs_codes[lang_id];
 
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
@@ -176,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        spinnerRight.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+        spinnerRight.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String item = (String)parent.getItemAtPosition(position);
-                int lang_id = Arrays.asList(item).indexOf(item);
+                String item = (String) parent.getItemAtPosition(position);
+                int lang_id = Arrays.asList(langs_names).indexOf(item);
                 String lang_code = langs_codes[lang_id];
 
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
