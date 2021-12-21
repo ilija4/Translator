@@ -68,9 +68,10 @@ public class MainActivity extends AppCompatActivity {
         translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
         translationConfig.setSpeechRecognitionLanguage(language1);
         translationConfig.addTargetLanguage(language2);
-
+        translationConfig.setProfanity(ProfanityOption.Raw);
         speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
         speechConfig.setSpeechSynthesisLanguage(language2);
+        speechConfig.setProfanity(ProfanityOption.Raw);
         assert (speechConfig != null);
 
         TextView txtOrig = (TextView) findViewById(R.id.textOriginal);
@@ -122,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                     language = "none";
                     translation = "none";
                     recognizer.close();
+
                     if (result != null)
                         for (Map.Entry<String, String> pair : result.getTranslations().entrySet()) {
                             language = pair.getKey();
@@ -151,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
                 String s = language1;
                 language1 = language2;
                 language2 = s;
+                translationConfig.setProfanity(ProfanityOption.Raw);
 
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
                 translationConfig.setSpeechRecognitionLanguage(language1);
@@ -158,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
 
                 speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
                 speechConfig.setSpeechSynthesisLanguage(language2);
+                speechConfig.setProfanity(ProfanityOption.Raw);
+
             }
         });
         spinnerLeft.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -167,8 +172,9 @@ public class MainActivity extends AppCompatActivity {
                 int lang_id = Arrays.asList(langs_names).indexOf(item);
                 String lang_code = langs_codes[lang_id];
 
+
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
-                language1 = lang_code;
+                language1 = lang_code;translationConfig.setProfanity(ProfanityOption.Raw);
                 translationConfig.setSpeechRecognitionLanguage(language1);
                 translationConfig.addTargetLanguage(language2);
             }
@@ -185,13 +191,17 @@ public class MainActivity extends AppCompatActivity {
                 int lang_id = Arrays.asList(langs_names).indexOf(item);
                 String lang_code = langs_codes[lang_id];
 
+
                 translationConfig = SpeechTranslationConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
                 language2 = lang_code;
+                translationConfig.setProfanity(ProfanityOption.Raw);
                 translationConfig.setSpeechRecognitionLanguage(language1);
                 translationConfig.addTargetLanguage(language2);
 
                 speechConfig = SpeechConfig.fromSubscription(SpeechSubscriptionKey, SpeechRegion);
                 speechConfig.setSpeechSynthesisLanguage(language2);
+                speechConfig.setProfanity(ProfanityOption.Raw);
+
             }
 
             @Override
